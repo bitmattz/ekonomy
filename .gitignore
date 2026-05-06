@@ -1,0 +1,25 @@
+# Keys - never commit these
+keys/
+
+# Backend
+ekonomy-api/target/
+ekonomy-api/.quarkus/
+*.class
+
+# Frontend
+ekonomy-ui/node_modules/
+ekonomy-ui/dist/
+ekonomy-ui/.angular/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+*.env.local
