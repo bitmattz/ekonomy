@@ -7,7 +7,7 @@ set -euo pipefail
 
 OUTPUT="${1:-ekonomy-backup-$(date +%F).sql}"
 
-docker compose exec -T postgres pg_dump \
+docker compose exec --no-TTY postgres pg_dump \
   -U ekonomy \
   -d ekonomy \
   --no-owner \

@@ -21,9 +21,9 @@ read -rp "This will ERASE all data in the ekonomy database. Continue? [y/N] " co
 [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
 
 # Drop and recreate schema to cleanly remove all objects
-docker compose exec -T postgres psql -U ekonomy -d ekonomy \
+docker compose exec --no-TTY postgres psql -U ekonomy -d ekonomy \
   -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
-docker compose exec -T postgres psql -U ekonomy -d ekonomy < "$INPUT"
+docker compose exec --no-TTY postgres psql -U ekonomy -d ekonomy < "$INPUT"
 
 echo "Restore complete from: $INPUT"

@@ -23,7 +23,7 @@ docker compose -f "$SCRIPT_DIR/docker-compose.yml" up postgres -d
 
 # Wait for postgres to be ready
 echo "[db]  Waiting for PostgreSQL to be ready..."
-until docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec -T postgres \
+until docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec --no-TTY postgres \
     pg_isready -U ekonomy -q 2>/dev/null; do
   sleep 1
 done
