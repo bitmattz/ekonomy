@@ -6,6 +6,7 @@ import com.ekonomy.category.Category;
 import com.ekonomy.category.CategoryRepository;
 import com.ekonomy.security.SecurityService;
 import com.ekonomy.transaction.dto.TransactionDto;
+import com.ekonomy.transaction.dto.TransferDto;
 import com.ekonomy.user.User;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Path("/api/transactions")
 @Authenticated
@@ -49,6 +51,10 @@ public class TransactionResource {
     @POST
     @Transactional
     public Response create(@Valid TransactionDto dto) {
+        if (dto.type().startsWith("TRANSFER")) {
+            throw new WebApplicationException("Use POST /api/transfers to create transfers", Response.Status.BAD_REQUEST);
+        }
+
         User user = securityService.getCurrentUser();
 
         Account account = accountRepository.findByIdOptional(dto.accountId())
@@ -75,6 +81,52 @@ public class TransactionResource {
         return Response.status(201).entity(toDto(tx)).build();
     }
 
+    @POST
+    @Path("/transfer")
+    @Transactional
+    public Response createTransfer(@Valid TransferDto dto) {
+        User user = securityService.getCurrentUser();
+
+        Account from = accountRepository.findByIdOptional(dto.fromAccountId())
+                .filter(a -> a.user.id.equals(user.id))
+                .orElseThrow(() -> new WebApplicationException(Response.Status.BAD_REQUEST));
+
+        Account to = accountRepository.findByIdOptional(dto.toAccountId())
+                .filter(a -> a.user.id.equals(user.id))
+                .orElseThrow(() -> new WebApplicationException(Response.Status.BAD_REQUEST));
+
+        UUID transferId = UUID.randomUUID();
+        LocalDate date = LocalDate.parse(dto.date());
+
+        Transaction out = new Transaction();
+        out.description = dto.description();
+        out.amount = dto.amount();
+        out.type = "TRANSFER_OUT";
+        out.date = date;
+        out.account = from;
+        out.user = user;
+        out.notes = dto.notes();
+        out.transferId = transferId;
+
+        Transaction in = new Transaction();
+        in.description = dto.description();
+        in.amount = dto.amount();
+        in.type = "TRANSFER_IN";
+        in.date = date;
+        in.account = to;
+        in.user = user;
+        in.notes = dto.notes();
+        in.transferId = transferId;
+
+        from.balance = from.balance.subtract(dto.amount());
+        to.balance = to.balance.add(dto.amount());
+
+        transactionRepository.persist(out);
+        transactionRepository.persist(in);
+
+        return Response.status(201).entity(List.of(toDto(out), toDto(in))).build();
+    }
+
     @PUT
     @Path("/{id}")
     @Transactional
@@ -84,7 +136,10 @@ public class TransactionResource {
                 .filter(t -> t.user.id.equals(user.id))
                 .orElseThrow(() -> new WebApplicationException(Response.Status.NOT_FOUND));
 
-        // Revert old balance effect
+        if (tx.type.startsWith("TRANSFER") || dto.type().startsWith("TRANSFER")) {
+            throw new WebApplicationException("Transfer transactions cannot be edited directly", Response.Status.BAD_REQUEST);
+        }
+
         reverseAccountBalance(tx.account, tx.type, tx.amount);
 
         Account newAccount = accountRepository.findByIdOptional(dto.accountId())
@@ -121,11 +176,20 @@ public class TransactionResource {
 
         reverseAccountBalance(tx.account, tx.type, tx.amount);
         transactionRepository.delete(tx);
+
+        if (tx.transferId != null) {
+            transactionRepository.findPartnerLeg(tx.transferId, tx.id)
+                    .ifPresent(partner -> {
+                        reverseAccountBalance(partner.account, partner.type, partner.amount);
+                        transactionRepository.delete(partner);
+                    });
+        }
+
         return Response.noContent().build();
     }
 
     private void updateAccountBalance(Account account, String type, BigDecimal amount) {
-        if ("INCOME".equals(type)) {
+        if ("INCOME".equals(type) || "TRANSFER_IN".equals(type)) {
             account.balance = account.balance.add(amount);
         } else {
             account.balance = account.balance.subtract(amount);
@@ -133,7 +197,7 @@ public class TransactionResource {
     }
 
     private void reverseAccountBalance(Account account, String type, BigDecimal amount) {
-        if ("INCOME".equals(type)) {
+        if ("INCOME".equals(type) || "TRANSFER_IN".equals(type)) {
             account.balance = account.balance.subtract(amount);
         } else {
             account.balance = account.balance.add(amount);
@@ -152,7 +216,8 @@ public class TransactionResource {
                 t.category != null ? t.category.id : null,
                 t.category != null ? t.category.name : null,
                 t.notes,
-                t.createdAt != null ? t.createdAt.toString() : null
+                t.createdAt != null ? t.createdAt.toString() : null,
+                t.transferId
         );
     }
 }

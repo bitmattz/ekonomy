@@ -23,3 +23,6 @@ Thumbs.db
 # Env
 .env
 *.env.local
+
+# Backups
+ekonomy-backup-*.sql

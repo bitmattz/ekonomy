@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "transactions")
@@ -38,6 +39,9 @@ public class Transaction extends PanacheEntity {
     public User user;
 
     public String notes;
+
+    @Column(name = "transfer_id")
+    public UUID transferId;
 
     @Column(name = "created_at", nullable = false)
     public LocalDateTime createdAt = LocalDateTime.now();

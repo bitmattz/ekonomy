@@ -63,7 +63,8 @@ public class ExportResource {
                         t.category != null ? t.category.id : null,
                         t.category != null ? t.category.name : null,
                         t.notes,
-                        t.createdAt != null ? t.createdAt.toString() : null))
+                        t.createdAt != null ? t.createdAt.toString() : null,
+                        t.transferId))
                 .toList();
 
         List<SalaryDto> salaries = salaryRepository.findByUserId(user.id).stream()
@@ -132,6 +133,7 @@ public class ExportResource {
             t.type = dto.type();
             t.date = dto.date() != null ? LocalDate.parse(dto.date()) : LocalDate.now();
             t.notes = dto.notes();
+            t.transferId = dto.transferId();
             t.user = user;
             t.account = acc;
             t.category = dto.categoryId() != null ? catMap.get(dto.categoryId()) : null;

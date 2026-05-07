@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Transaction } from '../models/transaction.model';
+import { Transaction, TransferRequest } from '../models/transaction.model';
 
 @Injectable({ providedIn: 'root' })
 export class TransactionService {
@@ -16,6 +16,10 @@ export class TransactionService {
 
   create(transaction: Transaction) {
     return this.http.post<Transaction>(this.url, transaction);
+  }
+
+  createTransfer(transfer: TransferRequest) {
+    return this.http.post<Transaction[]>(`${this.url}/transfer`, transfer);
   }
 
   update(id: number, transaction: Transaction) {
