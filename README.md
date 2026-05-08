@@ -137,6 +137,8 @@ docker compose down
 
 The app will be available at **http://localhost:80**.
 
+> **Warning:** The default credentials (`admin@ekonomy.com` / `ekonomy123`) are public knowledge. **Always override them before exposing the app outside localhost.**
+
 To change the default admin credentials, pass environment variables:
 
 ```bash
@@ -173,7 +175,7 @@ cd ~/ekonomy
 ./setup.sh   # generates keys/ — only needed once
 ```
 
-Create a `.env` file with strong credentials:
+Create a `.env` file with strong credentials — **this step is mandatory**:
 
 ```bash
 cat > .env <<EOF
