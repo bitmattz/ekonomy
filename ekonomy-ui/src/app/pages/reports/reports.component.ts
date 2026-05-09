@@ -202,7 +202,7 @@ export class ReportsComponent implements OnInit {
       const entry = map.get(key)!;
       if (t.type === 'INCOME') {
         entry.income += Number(t.amount);
-      } else {
+      } else if (t.type === 'EXPENSE') {
         entry.expenses += Number(t.amount);
         const cat = t.categoryName ?? 'Uncategorized';
         entry.cats.set(cat, (entry.cats.get(cat) ?? 0) + Number(t.amount));
