@@ -206,6 +206,9 @@ export class ReportsComponent implements OnInit {
         entry.expenses += Number(t.amount);
         const cat = t.categoryName ?? 'Uncategorized';
         entry.cats.set(cat, (entry.cats.get(cat) ?? 0) + Number(t.amount));
+      } else if(t.type === 'TRANSFER_IN' || t.type === 'TRANSFER_OUT') {
+        // Ignore transfers for report purposes
+        
       }
     }
 
